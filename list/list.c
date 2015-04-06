@@ -56,7 +56,7 @@ list* create_list(void)
     newlist->size = 0;
     newlist->head = NULL;
     newlist->tail = NULL;
-    return NULL;
+    return newlist;
 }
 
 /** push_front
@@ -68,9 +68,15 @@ list* create_list(void)
   */
 void push_front(list* llist, void* data)
 {
-    llist->head->next = create_node(data);
-    llist->head->next->prev = head;
-    llist->head = llist->head->next;
+    if (is_empty(llist) != 1) {
+        llist->head->prev = create_node(data);
+        llist->head->prev->next = llist->head;
+        llist->head = llist->head->prev;
+    } else {
+        llist->head = create_node(data);
+        llist->tail = llist->head;
+    }
+    llist->size++;
 }
 
 /** push_back
@@ -82,7 +88,15 @@ void push_front(list* llist, void* data)
   */
 void push_back(list* llist, void* data)
 {
-    /// @todo Implement
+    if (is_empty(llist) != 1) {
+        llist->tail->next = create_node(data);
+        llist->tail->next->prev = llist->tail;
+        llist->tail = llist->tail->next;
+    } else {
+        llist->head = create_node(data);
+        llist->tail = llist->head;
+    }
+    llist->size++;
 }
 
 /** front
@@ -95,8 +109,9 @@ void push_back(list* llist, void* data)
   */
 void* front(list* llist)
 {
-    /// @todo Implement changing the return value!
-    /// @note you are returning the HEAD's DATA not the head node. Remember the user should never deal with the linked list nodes.
+    if (is_empty(llist) != 1) {
+        return llist->head->data;
+    }
     return NULL;
 }
 
@@ -110,7 +125,9 @@ void* front(list* llist)
   */
 void* back(list* llist)
 {
-    /// @todo Implement changing the return value!
+    if (is_empty(llist) != 1) {
+        return llist->tail->data;
+    }
     return NULL;
 }
 
@@ -126,9 +143,18 @@ void* back(list* llist)
   */
 int remove_front(list* llist, list_op free_func)
 {
-    /// @todo Implement
-    /// @note remember to also free the node itself
-    /// @note free_func is a function that is responsible for freeing the node's data only.
+    if (is_empty(llist) != 1) {
+        free_func(llist->head->data);
+        llist->head = llist->head->next;
+        if (llist->head == NULL) {
+            llist->tail = NULL;
+        } else {
+            free(llist->head->prev);
+            llist->head->prev = NULL;
+        }
+        llist->size--;
+        return 0;
+    }
     return -1;
 }
 
@@ -144,9 +170,18 @@ int remove_front(list* llist, list_op free_func)
   */
 int remove_back(list* llist, list_op free_func)
 {
-    /// @todo Implement
-    /// @note Remember to also free the node itself
-    /// @note free_func is a function that is responsible for freeing the node's data only.
+    if (is_empty(llist) != 1) {
+        free_func(llist->tail->data);
+        llist->tail = llist->tail->prev;
+        if (llist->tail == NULL) {
+            llist->head = NULL;
+        } else {
+            free(llist->tail->next);
+            llist->tail->next = NULL;
+        }
+        llist->size--;
+        return 0;
+    }
     return -1;
 }
 
@@ -166,8 +201,21 @@ int remove_back(list* llist, list_op free_func)
   */
 list* copy_list(list* llist, list_cpy copy_func)
 {
-	/// @todo implement
-	return NULL;
+    list* newlist = create_list();
+    if (is_empty(llist) != 1) {
+        newlist->size = llist->size;
+        newlist->head = create_node(copy_func(llist->head->data));
+        node* curr = llist->head->next;
+        node* ncurr = newlist->head;
+        while (curr != NULL) {
+            ncurr->next = create_node(copy_func(curr->data));
+            ncurr->next->prev = ncurr;
+            ncurr = ncurr->next;
+            curr = curr->next;
+        }
+        newlist->tail = ncurr;
+    }
+    return newlist;
 }
 
 /** size
@@ -179,8 +227,7 @@ list* copy_list(list* llist, list_cpy copy_func)
   */
 int size(list* llist)
 {
-    ///@note simply return the size of the linked list.  Its that easy!
-    return 0;
+    return llist->size;
 }
 
 /** remove_if
@@ -198,7 +245,33 @@ int remove_if(list* llist, list_pred pred_func, list_op free_func)
     /// @note remember to also free all nodes you remove.
     /// @note be sure to call pred_func on the NODES DATA to check if the node needs to be removed.
     /// @note free_func is a function that is responsible for freeing the node's data only.
-    return 0;
+    int counter = 0;
+    if (is_empty(llist) != 1) {
+      node* curr = llist->head;
+      while (curr != NULL) {
+          printf("ok\n");
+          if (pred_func(curr->data) == 1) {
+              if (curr != llist->head && curr!= llist->tail) {
+                  free_func(curr->data);
+                  curr->prev->next = curr->next;
+                  curr->next->prev = curr->prev;
+                  free(curr);
+                  curr = curr->next;
+                  llist->size--;
+              } else if (curr == llist->head) {
+                  remove_front(llist, free_func);
+                  curr = llist->head;
+              } else if (curr == llist->tail) {
+                  remove_back(llist, free_func);
+                  curr = llist->tail;
+              }
+              counter++;
+          } else {
+              curr = curr->next;
+          }
+        }
+    }
+    return counter;
 }
 
 /** is_empty
@@ -211,6 +284,9 @@ int remove_if(list* llist, list_pred pred_func, list_op free_func)
 int is_empty(list* llist)
 {
     ///@note an empty list by the way we want you to implement it has a size of zero and head points to NULL.
+    if ((llist->size == 0) && (llist->head == NULL)) {
+        return 1;
+    }
     return 0;
 }
 
@@ -226,6 +302,17 @@ void empty_list(list* llist, list_op free_func)
     /// @todo Implement
     /// @note Free all of the nodes not the linked list itself.
     /// @note do not free llist.
+    if (is_empty(llist) != 1) {
+        node* curr = llist->head;
+        while (curr != NULL) {
+            free_func(curr->data);
+            free(curr);
+            curr = curr->next;
+        }
+        llist->size = 0;
+        llist->head = NULL;
+        llist->tail = NULL;
+    }
 }
 
 /** traverse
@@ -237,5 +324,11 @@ void empty_list(list* llist, list_op free_func)
   */
 void traverse(list* llist, list_op do_func)
 {
-    /// @todo Implement
+    if (is_empty(llist) != 1) {
+        node* curr = llist->head;
+        while (curr != NULL) {
+            do_func(curr->data);
+            curr = curr->next;
+        }
+    }    
 }
