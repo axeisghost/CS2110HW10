@@ -175,6 +175,13 @@ int main(void)
   print_person(back(llist3));
   printf("Size: %d\n", llist3->size);
 
+  printf("TEST CASE 11\nOut of Memory Test:\n");
+  list* llist4 = create_list();
+  Person* test1 = create_person("Trash", 21);
+  while (1) {
+      push_front(llist4, test1);
+  }
+
 
 
 

@@ -37,6 +37,10 @@ static node* create_node(void* data);
 static node* create_node(void* data)
 {
     node* newnode = (node*)malloc(sizeof(node));
+    if (newnode == 0) {
+        printf("Out of memory.\n");
+        return NULL;
+    }
     newnode->data = data;
     newnode->prev = NULL;
     newnode->next = NULL;
@@ -53,6 +57,10 @@ static node* create_node(void* data)
 list* create_list(void)
 {
     list* newlist = (list*)malloc(sizeof(list));
+    if (newlist == 0) {
+        printf("Out of memory.\n");
+        return NULL;
+    }
     newlist->size = 0;
     newlist->head = NULL;
     newlist->tail = NULL;
