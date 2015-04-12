@@ -153,13 +153,14 @@ int remove_front(list* llist, list_op free_func)
 {
     if (is_empty(llist) != 1) {
         free_func(llist->head->data);
-        llist->head = llist->head->next;
-        if (llist->head == NULL) {
+        node* now = llist->head->next;
+        free(llist->head);
+        if (now == NULL) {
             llist->tail = NULL;
         } else {
-            free(llist->head->prev);
-            llist->head->prev = NULL;
+            now->prev = NULL;
         }
+        llist->head = now;
         llist->size--;
         return 0;
     }
@@ -180,13 +181,14 @@ int remove_back(list* llist, list_op free_func)
 {
     if (is_empty(llist) != 1) {
         free_func(llist->tail->data);
-        llist->tail = llist->tail->prev;
-        if (llist->tail == NULL) {
+        node* now = llist->tail->prev;
+        free(llist->tail);
+        if (now == NULL) {
             llist->head = NULL;
         } else {
-            free(llist->tail->next);
-            llist->tail->next = NULL;
+            now->next = NULL;
         }
+        llist->tail = now;
         llist->size--;
         return 0;
     }
@@ -256,15 +258,16 @@ int remove_if(list* llist, list_pred pred_func, list_op free_func)
     int counter = 0;
     if (is_empty(llist) != 1) {
       node* curr = llist->head;
+      node* pcur = llist->head->prev;
       while (curr != NULL) {
-          printf("ok\n");
           if (pred_func(curr->data) == 1) {
               if (curr != llist->head && curr!= llist->tail) {
-                  free_func(curr->data);
-                  curr->prev->next = curr->next;
-                  curr->next->prev = curr->prev;
-                  free(curr);
+                  pcur = curr;
                   curr = curr->next;
+                  free_func(pcur->data);
+                  pcur->prev->next = pcur->next;
+                  pcur->next->prev = pcur->prev;
+                  free(pcur);
                   llist->size--;
               } else if (curr == llist->head) {
                   remove_front(llist, free_func);
@@ -311,11 +314,14 @@ void empty_list(list* llist, list_op free_func)
     /// @note Free all of the nodes not the linked list itself.
     /// @note do not free llist.
     if (is_empty(llist) != 1) {
-        node* curr = llist->head;
-        while (curr != NULL) {
-            free_func(curr->data);
-            free(curr);
-            curr = curr->next;
+        // node* curr = llist->head;
+        // node* pcur = llist->head->prev;
+        while (llist->head != NULL) {
+            // pcur = curr;
+            // curr = curr->next;
+            // free_func(pcur->data);
+            // free(pcur);
+            remove_front(llist, free_func);
         }
         llist->size = 0;
         llist->head = NULL;
